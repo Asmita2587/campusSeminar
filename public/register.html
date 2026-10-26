@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Register - Campus Seminar Registration</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Campus Seminar Registration</h1>
+    <nav>
+        <a href="index.html">Seminars</a>
+        <a href="register.html" class="active">Register</a>
+        <a href="add-seminar.html">Add Seminar</a>
+        <a href="my-registration.html">My Registration</a>
+        <a href="students.html">Registered Students</a>
+    </nav>
+</header>
+
+<main>
+
+    <section>
+        <h2>Register for a Seminar</h2>
+        <div id="seminarMsg"></div>
+        <form id="regForm">
+            <fieldset>
+                <legend>Student Details</legend>
+
+                <label for="name">Full Name</label>
+                <input type="text" id="name" placeholder="Enter your name" required>
+
+                <label for="rollNo">Roll Number</label>
+                <input type="text" id="rollNo" placeholder="e.g. 22CS101" required>
+
+                <label for="email">Email</label>
+                <input type="email" id="email" placeholder="you@college.edu" required>
+
+                <label for="mobile">Mobile Number</label>
+                <input type="text" id="mobile" placeholder="10 digits" maxlength="10" required>
+
+                <label for="department">Department</label>
+                <select id="department">
+                    <option value="">-- Select Department --</option>
+                </select>
+
+                <p class="label">Year of Study</p>
+                <label class="inline"><input type="radio" name="year" value="1"> 1st</label>
+                <label class="inline"><input type="radio" name="year" value="2"> 2nd</label>
+                <label class="inline"><input type="radio" name="year" value="3"> 3rd</label>
+                <label class="inline"><input type="radio" name="year" value="4"> 4th</label>
+            </fieldset>
+
+            <fieldset>
+                <legend>Seminar</legend>
+                <label for="seminarSelect">Choose Seminar</label>
+                <select id="seminarSelect" onchange="showDetails()">
+                    <option value="">-- Select Seminar --</option>
+                </select>
+                <div id="seminarDetails"></div>
+            </fieldset>
+
+            <button type="button" onclick="registerStudent()">Register</button>
+            <button type="reset" class="grey" onclick="clearMessages()">Clear</button>
+        </form>
+
+        <div id="message"></div>
+        <div id="ticket"></div>
+    </section>
+
+    <aside>
+        <h3>Notice</h3>
+        <ul>
+            <li>Registration closes when all seats are filled.</li>
+            <li>One registration per roll number for each seminar.</li>
+            <li>Keep your registration ID safe.</li>
+        </ul>
+    </aside>
+
+</main>
+
+<footer>
+    <p>&copy; 2026 Campus Seminar Committee</p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,247 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f2f4fa;
+    color: #1c2340;
+}
+
+header {
+    background-color: #1d2a6b;
+    color: white;
+    text-align: center;
+    padding: 20px;
+    border-bottom: 5px solid #f2b134;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    padding: 8px 14px;
+    display: inline-block;
+}
+
+nav a:hover {
+    background-color: #2b3a8c;
+}
+
+main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+section {
+    background-color: white;
+    border: 1px solid #d5daea;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+h2 {
+    margin-top: 0;
+    color: #1d2a6b;
+}
+
+/* Seminar cards */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.card {
+    border: 1px solid #d5daea;
+    border-left: 6px solid #2b3a8c;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.card.full {
+    border-left-color: #b3261e;
+}
+
+.card h3 {
+    margin: 0 0 8px 0;
+    font-size: 17px;
+}
+
+.card p {
+    margin: 4px 0;
+    font-size: 14px;
+}
+
+/* Form */
+fieldset {
+    border: 1px solid #d5daea;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    padding: 10px 15px 15px;
+}
+
+legend {
+    font-weight: bold;
+    color: #1d2a6b;
+}
+
+label, .label {
+    display: block;
+    margin: 12px 0 4px;
+    font-weight: bold;
+}
+
+label.inline {
+    display: inline-block;
+    font-weight: normal;
+    margin-right: 15px;
+}
+
+input[type="text"], input[type="email"], select {
+    width: 100%;
+    padding: 9px;
+    border: 2px solid #d5daea;
+    border-radius: 6px;
+    font-size: 15px;
+}
+
+input:focus, select:focus {
+    border-color: #2b3a8c;
+    outline: none;
+}
+
+#seminarDetails:not(:empty) {
+    background-color: #eef1fb;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 6px;
+}
+
+/* Buttons */
+button {
+    background-color: #2b3a8c;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    margin: 10px 6px 0 0;
+    border-radius: 6px;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #1d2a6b;
+}
+
+button.grey {
+    background-color: #6b7194;
+}
+
+button.red {
+    background-color: #b3261e;
+}
+
+/* Messages and ticket */
+.msg {
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 12px;
+}
+
+.msg.ok {
+    background-color: #e7f6ee;
+    border: 1px solid #17794d;
+    color: #0f5a38;
+}
+
+.msg.err {
+    background-color: #fdeceb;
+    border: 1px solid #b3261e;
+    color: #8c1d18;
+}
+
+.ticket {
+    background-color: #fff8e6;
+    border: 2px dashed #f2b134;
+    border-radius: 10px;
+    padding: 5px 18px;
+    margin-top: 15px;
+}
+
+/* Table */
+#registrationTable {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #d5daea;
+}
+
+th {
+    background-color: #2b3a8c;
+    color: white;
+}
+
+tr:nth-child(even) {
+    background-color: #f2f4fa;
+}
+
+aside {
+    background-color: #fff8e6;
+    border-left: 5px solid #f2b134;
+    padding: 5px 20px 10px;
+}
+
+footer {
+    text-align: center;
+    padding: 15px;
+}
+/* ---------- Added for multi-page version ---------- */
+nav a.active {
+    background-color: #f2b134;
+    color: #1c2340;
+    font-weight: bold;
+}
+
+a.button {
+    display: inline-block;
+    background-color: #2b3a8c;
+    color: white;
+    text-decoration: none;
+    padding: 10px 18px;
+    margin: 10px 6px 0 0;
+    border-radius: 6px;
+    font-size: 15px;
+}
+
+a.button.grey {
+    background-color: #6b7194;
+}
+
+a.button:hover {
+    background-color: #1d2a6b;
+}
+
+input[type="date"], input[type="time"], input[type="number"] {
+    width: 100%;
+    padding: 9px;
+    border: 2px solid #d5daea;
+    border-radius: 6px;
+    font-size: 15px;
+}
+
+input[type="date"]:focus, input[type="time"]:focus, input[type="number"]:focus {
+    border-color: #2b3a8c;
+    outline: none;
+}

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My Registration - Campus Seminar Registration</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Campus Seminar Registration</h1>
+    <nav>
+        <a href="index.html">Seminars</a>
+        <a href="register.html">Register</a>
+        <a href="add-seminar.html">Add Seminar</a>
+        <a href="my-registration.html" class="active">My Registration</a>
+        <a href="students.html">Registered Students</a>
+    </nav>
+</header>
+
+<main>
+
+    <section>
+        <h2>My Registration</h2>
+        <label for="lookupId">Registration ID</label>
+        <input type="text" id="lookupId" placeholder="e.g. SEM4827">
+        <button type="button" onclick="findRegistration()">Find</button>
+        <button type="button" class="grey" onclick="viewSaved()">View Last Saved</button>
+        <button type="button" class="red" onclick="cancelRegistration()">Cancel Registration</button>
+        <div id="lookupMsg"></div>
+        <div id="lookupResult"></div>
+    </section>
+
+</main>
+
+<footer>
+    <p>&copy; 2026 Campus Seminar Committee</p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Seminars - Campus Seminar Registration</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Campus Seminar Registration</h1>
+    <nav>
+        <a href="index.html" class="active">Seminars</a>
+        <a href="register.html">Register</a>
+        <a href="add-seminar.html">Add Seminar</a>
+        <a href="my-registration.html">My Registration</a>
+        <a href="students.html">Registered Students</a>
+    </nav>
+</header>
+
+<main>
+
+    <section>
+        <h2>Upcoming Seminars</h2>
+        <p>Click the button to see all upcoming seminars.</p>
+        <button type="button" onclick="loadSeminars()">Show Seminars</button>
+        <a class="button grey" href="register.html">Register Now</a>
+        <div id="seminarMsg"></div>
+        <div id="seminarList" class="grid"></div>
+    </section>
+
+</main>
+
+<footer>
+    <p>&copy; 2026 Campus Seminar Committee</p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

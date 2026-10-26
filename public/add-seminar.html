@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Add Seminar - Campus Seminar Registration</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>Campus Seminar Registration</h1>
+    <nav>
+        <a href="index.html">Seminars</a>
+        <a href="register.html">Register</a>
+        <a href="add-seminar.html" class="active">Add Seminar</a>
+        <a href="my-registration.html">My Registration</a>
+        <a href="students.html">Registered Students</a>
+    </nav>
+</header>
+
+<main>
+
+    <section>
+        <h2>Add a New Seminar</h2>
+        <form id="addForm">
+            <fieldset>
+                <legend>Seminar Details</legend>
+
+                <label for="title">Seminar Title</label>
+                <input type="text" id="title" placeholder="e.g. Cloud Computing Basics" required>
+
+                <label for="speaker">Speaker Name</label>
+                <input type="text" id="speaker" placeholder="e.g. Dr. Rahul Sharma" required>
+
+                <label for="date">Date</label>
+                <input type="date" id="date" required>
+
+                <label for="time">Time</label>
+                <input type="time" id="time" required>
+
+                <label for="venue">Venue</label>
+                <input type="text" id="venue" placeholder="e.g. Seminar Hall A" required>
+
+                <label for="capacity">Number of Seats</label>
+                <input type="number" id="capacity" min="1" max="500" placeholder="e.g. 100" required>
+            </fieldset>
+
+            <button type="button" onclick="addSeminar()">Add Seminar</button>
+            <button type="reset" class="grey" onclick="clearAddMessage()">Clear</button>
+            <a class="button grey" href="index.html">View Seminars</a>
+        </form>
+
+        <div id="message"></div>
+    </section>
+
+</main>
+
+<footer>
+    <p>&copy; 2026 Campus Seminar Committee</p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
