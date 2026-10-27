@@ -1,356 +1,164 @@
-"use strict";
 let seminars = [];
-// ---------- Small helper functions ----------
-function getBox(id) {
-    return document.getElementById(id);
-}
-function getInput(id) {
-    return document.getElementById(id);
-}
-function getSelect(id) {
-    return document.getElementById(id);
-}
-// true if this page has an element with this id
-function pageHas(id) {
-    return document.getElementById(id) != null;
-}
-// Makes user text safe before using innerHTML
-function safe(text) {
-    return String(text).replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-function showMessage(boxId, text, ok) {
-    if (!pageHas(boxId)) {
-        return;
-    }
-    const box = getBox(boxId);
-    box.className = ok ? "msg ok" : "msg err";
-    box.textContent = text;
-}
-// 2026-11-12  ->  12/11/2026
-function formatDate(isoDate) {
-    const p = isoDate.split("-");
-    return p[2] + "/" + p[1] + "/" + p[0];
-}
-// 14:00  ->  2:00 PM
-function formatTime(time24) {
-    const p = time24.split(":");
-    let hour = Number(p[0]);
-    const ampm = hour >= 12 ? "PM" : "AM";
-    hour = hour % 12;
-    if (hour == 0) {
-        hour = 12;
-    }
-    return hour + ":" + p[1] + " " + ampm;
-}
-// today as yyyy-mm-dd
-function todayIso() {
-    const d = new Date();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return d.getFullYear() + "-" + month + "-" + day;
-}
-// ---------- AJAX (XMLHttpRequest) ----------
-function sendRequest(method, url, data, done) {
-    const xhttp = new XMLHttpRequest();
-    xhttp.open(method, url, true);
-    xhttp.setRequestHeader("Content-Type", "application/json");
-    xhttp.onreadystatechange = function () {
-        if (xhttp.readyState == 4) {
-            try {
-                done(xhttp.status, JSON.parse(xhttp.responseText));
-            }
-            catch (error) {
-                done(0, { message: "Server not reachable. Is it running?" });
-            }
-        }
+
+const $ = id => document.getElementById(id);
+
+// AJAX helper (Week 10 XMLHttpRequest)
+function ajax(method, url, data, cb) {
+    let xhr = new XMLHttpRequest();
+    xhr.open(method, url, true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState == 4) cb(xhr.status, JSON.parse(xhr.responseText || "{}"));
     };
-    xhttp.send(data ? JSON.stringify(data) : null);
+    xhr.send(data ? JSON.stringify(data) : null);
 }
-// ---------- SEMINARS PAGE (index.html) ----------
-// Gets seminars from the server. Runs when "Show Seminars" is clicked,
-// and also on the Register page to fill the dropdowns.
+
+// 1. Load Seminars (for index.html and register.html)
 function loadSeminars() {
-    sendRequest("GET", "/api/seminars", null, function (status, result) {
-        if (status != 200) {
-            showMessage("seminarMsg", result.message, false);
-            return;
+    ajax("GET", "/api/seminars", null, (status, data) => {
+        if (status != 200) return;
+        seminars = data.seminars;
+
+        if ($("seminarList")) {
+            $("seminarList").innerHTML = seminars.map(s => `
+                <div class="card ${s.seatsLeft <= 0 ? "full" : ""}">
+                    <h3>${s.title}</h3>
+                    <p>Speaker: ${s.speaker}</p>
+                    <p>${s.date} at ${s.time}</p>
+                    <p>Venue: ${s.venue}</p>
+                    <p><b>${s.seatsLeft <= 0 ? "FULL" : s.seatsLeft + " seats left"}</b></p>
+                </div>
+            `).join("");
         }
-        seminars = result.seminars;
-        if (pageHas("seminarMsg")) {
-            getBox("seminarMsg").className = "";
-            getBox("seminarMsg").textContent = "";
-        }
-        if (pageHas("seminarList")) {
-            showCards();
-        }
-        if (pageHas("seminarSelect")) {
-            fillDropdowns(result.departments);
+
+        if ($("seminarSelect")) {
+            $("department").innerHTML = '<option value="">-- Select Department --</option>' +
+                data.departments.map(d => `<option>${d}</option>`).join("");
+            $("seminarSelect").innerHTML = '<option value="">-- Select Seminar --</option>' +
+                seminars.map(s => `<option value="${s.id}" ${s.seatsLeft <= 0 ? "disabled" : ""}>${s.title} ${s.seatsLeft <= 0 ? "(Full)" : ""}</option>`).join("");
         }
     });
 }
-function showCards() {
-    if (seminars.length == 0) {
-        getBox("seminarList").innerHTML = "<p>No seminars yet. Add one from the Add Seminar page.</p>";
-        return;
-    }
-    let output = "";
-    for (let i = 0; i < seminars.length; i++) {
-        const s = seminars[i];
-        const full = s.seatsLeft <= 0;
-        output += '<div class="card' + (full ? " full" : "") + '">' +
-            "<h3>" + safe(s.title) + "</h3>" +
-            "<p>Speaker: " + safe(s.speaker) + "</p>" +
-            "<p>" + formatDate(s.date) + " at " + formatTime(s.time) + "</p>" +
-            "<p>Venue: " + safe(s.venue) + "</p>" +
-            "<p><b>" + (full ? "FULL" : s.seatsLeft + " of " + s.capacity + " seats left") + "</b></p>" +
-            "</div>";
-    }
-    getBox("seminarList").innerHTML = output;
-}
-// ---------- REGISTER PAGE (register.html) ----------
-function fillDropdowns(departments) {
-    const dept = getSelect("department");
-    const sem = getSelect("seminarSelect");
-    const oldDept = dept.value;
-    const oldSem = sem.value;
-    dept.innerHTML = '<option value="">-- Select Department --</option>';
-    for (let i = 0; i < departments.length; i++) {
-        dept.innerHTML += "<option>" + departments[i] + "</option>";
-    }
-    sem.innerHTML = '<option value="">-- Select Seminar --</option>';
-    for (let i = 0; i < seminars.length; i++) {
-        const s = seminars[i];
-        const full = s.seatsLeft <= 0;
-        sem.innerHTML += '<option value="' + s.id + '"' + (full ? " disabled" : "") + ">" +
-            safe(s.title) + (full ? " (Full)" : "") + "</option>";
-    }
-    dept.value = oldDept;
-    sem.value = oldSem;
-}
-// Runs when the seminar dropdown changes (onchange)
+
+// 2. Seminar dropdown details
 function showDetails() {
-    const id = Number(getSelect("seminarSelect").value);
-    const box = getBox("seminarDetails");
-    const s = seminars.find(function (item) { return item.id === id; });
-    if (!s) {
-        box.innerHTML = "";
-        return;
-    }
-    box.innerHTML = "<b>" + safe(s.title) + "</b><br>Speaker: " + safe(s.speaker) +
-        "<br>Date: " + formatDate(s.date) + " | Time: " + formatTime(s.time) +
-        "<br>Venue: " + safe(s.venue) + "<br>Seats left: " + s.seatsLeft;
+    let s = seminars.find(item => item.id == $("seminarSelect").value);
+    $("seminarDetails").innerHTML = s ? `<b>${s.title}</b><br>Speaker: ${s.speaker}<br>Date: ${s.date} at ${s.time}<br>Venue: ${s.venue}<br>Seats left: ${s.seatsLeft}` : "";
 }
+
+// 3. Register student
 function registerStudent() {
-    // READ + CLEAN
-    const name = getInput("name").value.trim();
-    const rollNo = getInput("rollNo").value.trim().toUpperCase();
-    const email = getInput("email").value.trim().toLowerCase();
-    const mobile = getInput("mobile").value.trim();
-    const department = getSelect("department").value;
-    const seminarId = getSelect("seminarSelect").value;
-    const yearBox = document.querySelector('input[name="year"]:checked');
-    // CHECK (validation)
-    if (name == "" || name.length < 3) {
-        showMessage("message", "Enter your full name (minimum 3 characters).", false);
-        return;
-    }
-    if (rollNo.length < 5) {
-        showMessage("message", "Roll number must have at least 5 characters.", false);
-        return;
-    }
-    if (!email.includes("@") || !email.includes(".")) {
-        showMessage("message", "Enter a valid email address.", false);
-        return;
-    }
-    if (mobile.length != 10 || isNaN(Number(mobile))) {
-        showMessage("message", "Mobile number must have exactly 10 digits.", false);
-        return;
-    }
-    if (department == "") {
-        showMessage("message", "Select your department.", false);
-        return;
-    }
-    if (yearBox == null) {
-        showMessage("message", "Select your year of study.", false);
-        return;
-    }
-    if (seminarId == "") {
-        showMessage("message", "Select a seminar.", false);
-        return;
-    }
-    // ACCEPT: send to server
-    const student = {
-        name: name, rollNo: rollNo, email: email, mobile: mobile,
-        department: department, year: Number(yearBox.value),
-        seminarId: Number(seminarId)
+    let yr = document.querySelector('input[name="year"]:checked');
+    let data = {
+        name: $("name").value.trim(),
+        rollNo: $("rollNo").value.trim(),
+        email: $("email").value.trim(),
+        mobile: $("mobile").value.trim(),
+        department: $("department").value,
+        year: yr ? yr.value : "",
+        seminarId: $("seminarSelect").value
     };
-    sendRequest("POST", "/api/register", student, function (status, result) {
+
+    if (!data.name || !data.rollNo || !data.email || !data.mobile || !data.department || !data.year || !data.seminarId) {
+        $("message").className = "msg err";
+        $("message").innerText = "Please fill all fields!";
+        return;
+    }
+
+    ajax("POST", "/api/register", data, (status, res) => {
+        $("message").className = status == 201 ? "msg ok" : "msg err";
+        $("message").innerText = res.message;
         if (status == 201) {
-            showMessage("message", result.message, true);
-            showTicket("ticket", result.registration);
-            saveInBrowser(result.registration.id);
-            document.getElementById("regForm").reset();
-            getBox("seminarDetails").innerHTML = "";
-            loadSeminars(); // refresh seats left in the dropdown
-        }
-        else {
-            showMessage("message", result.message, false);
-            getBox("ticket").innerHTML = "";
+            $("ticket").innerHTML = `<div class="ticket"><h3>Registration ID: ${res.registration.id}</h3><p>Name: ${res.registration.name} (${res.registration.rollNo})</p><p>Seminar: ${res.registration.seminarTitle}</p><p>Date: ${res.registration.date}</p></div>`;
+            localStorage.setItem("lastRegId", res.registration.id);
+            $("regForm").reset();
+            $("seminarDetails").innerHTML = "";
+            loadSeminars();
         }
     });
 }
-function showTicket(boxId, r) {
-    getBox(boxId).innerHTML =
-        '<div class="ticket">' +
-            "<h3>Registration ID: " + safe(r.id) + "</h3>" +
-            "<p>Name: " + safe(r.name) + " (" + safe(r.rollNo) + ")</p>" +
-            "<p>" + safe(r.department) + " - Year " + r.year + "</p>" +
-            "<p>Seminar: " + safe(r.seminarTitle) + "</p>" +
-            "<p>Registered on: " + safe(r.date) + "</p>" +
-            "</div>";
-}
+
 function clearMessages() {
-    getBox("message").className = "";
-    getBox("message").textContent = "";
-    getBox("ticket").innerHTML = "";
-    getBox("seminarDetails").innerHTML = "";
+    $("message").innerText = "";
+    $("ticket").innerHTML = "";
+    $("seminarDetails").innerHTML = "";
 }
-// ---------- ADD SEMINAR PAGE (add-seminar.html) ----------
+
+// 4. Add Seminar
 function addSeminar() {
-    // READ + CLEAN
-    const title = getInput("title").value.trim();
-    const speaker = getInput("speaker").value.trim();
-    const date = getInput("date").value;
-    const time = getInput("time").value;
-    const venue = getInput("venue").value.trim();
-    const capacity = getInput("capacity").value.trim();
-    // CHECK
-    if (title.length < 5) {
-        showMessage("message", "Title must have at least 5 characters.", false);
-        return;
-    }
-    if (speaker.length < 3) {
-        showMessage("message", "Speaker name must have at least 3 characters.", false);
-        return;
-    }
-    if (date == "") {
-        showMessage("message", "Select the seminar date.", false);
-        return;
-    }
-    if (date < todayIso()) {
-        showMessage("message", "The seminar date cannot be in the past.", false);
-        return;
-    }
-    if (time == "") {
-        showMessage("message", "Select the seminar time.", false);
-        return;
-    }
-    if (venue.length < 2) {
-        showMessage("message", "Enter the venue.", false);
-        return;
-    }
-    const seats = Number(capacity);
-    if (capacity == "" || isNaN(seats) || seats < 1 || seats > 500) {
-        showMessage("message", "Seats must be a number from 1 to 500.", false);
-        return;
-    }
-    // ACCEPT
-    const newSeminar = {
-        title: title, speaker: speaker, date: date,
-        time: time, venue: venue, capacity: seats
+    let data = {
+        title: $("title").value.trim(),
+        speaker: $("speaker").value.trim(),
+        date: $("date").value,
+        time: $("time").value,
+        venue: $("venue").value.trim(),
+        capacity: $("capacity").value
     };
-    sendRequest("POST", "/api/seminars", newSeminar, function (status, result) {
-        showMessage("message", result.message, status == 201);
-        if (status == 201) {
-            document.getElementById("addForm").reset();
-        }
+
+    if (!data.title || !data.speaker || !data.date || !data.time || !data.venue || !data.capacity) {
+        $("message").className = "msg err";
+        $("message").innerText = "Please fill all fields!";
+        return;
+    }
+
+    ajax("POST", "/api/seminars", data, (status, res) => {
+        $("message").className = status == 201 ? "msg ok" : "msg err";
+        $("message").innerText = res.message;
+        if (status == 201) $("addForm").reset();
     });
 }
-function clearAddMessage() {
-    getBox("message").className = "";
-    getBox("message").textContent = "";
-}
-// ---------- MY REGISTRATION PAGE (my-registration.html) ----------
-function saveInBrowser(id) {
-    try {
-        localStorage.setItem("lastRegId", id);
-    }
-    catch (error) {
-        console.log("Browser storage not available");
-    }
-}
-function viewSaved() {
-    try {
-        const id = localStorage.getItem("lastRegId");
-        if (id == null) {
-            showMessage("lookupMsg", "No saved registration in this browser.", false);
-            return;
-        }
-        getInput("lookupId").value = id;
-        findRegistration();
-    }
-    catch (error) {
-        showMessage("lookupMsg", "Browser storage not available.", false);
-    }
-}
+
+function clearAddMessage() { $("message").innerText = ""; }
+
+// 5. My Registration Lookup & Cancel
 function findRegistration() {
-    const id = getInput("lookupId").value.trim().toUpperCase();
-    if (id == "") {
-        showMessage("lookupMsg", "Enter a registration ID.", false);
-        return;
-    }
-    sendRequest("GET", "/api/registrations/" + id, null, function (status, result) {
+    let id = $("lookupId").value.trim().toUpperCase();
+    if (!id) return;
+    ajax("GET", "/api/registrations/" + id, null, (status, res) => {
         if (status == 200) {
-            getBox("lookupMsg").className = "";
-            getBox("lookupMsg").textContent = "";
-            showTicket("lookupResult", result);
-        }
-        else {
-            getBox("lookupResult").innerHTML = "";
-            showMessage("lookupMsg", result.message, false);
+            $("lookupMsg").innerText = "";
+            $("lookupResult").innerHTML = `<div class="ticket"><h3>Registration ID: ${res.id}</h3><p>Name: ${res.name} (${res.rollNo})</p><p>Seminar: ${res.seminarTitle}</p></div>`;
+        } else {
+            $("lookupResult").innerHTML = "";
+            $("lookupMsg").className = "msg err";
+            $("lookupMsg").innerText = res.message;
         }
     });
 }
+
+function viewSaved() {
+    let id = localStorage.getItem("lastRegId");
+    if (id) {
+        $("lookupId").value = id;
+        findRegistration();
+    } else {
+        $("lookupMsg").className = "msg err";
+        $("lookupMsg").innerText = "No saved registration found.";
+    }
+}
+
 function cancelRegistration() {
-    const id = getInput("lookupId").value.trim().toUpperCase();
-    if (id == "") {
-        showMessage("lookupMsg", "Enter the ID you want to cancel.", false);
-        return;
-    }
-    if (!confirm("Cancel registration " + id + "?")) {
-        return;
-    }
-    sendRequest("DELETE", "/api/registrations/" + id, null, function (status, result) {
-        showMessage("lookupMsg", result.message, status == 200);
-        getBox("lookupResult").innerHTML = "";
+    let id = $("lookupId").value.trim().toUpperCase();
+    if (!id || !confirm("Cancel registration " + id + "?")) return;
+    ajax("DELETE", "/api/registrations/" + id, null, (status, res) => {
+        $("lookupMsg").className = status == 200 ? "msg ok" : "msg err";
+        $("lookupMsg").innerText = res.message;
+        $("lookupResult").innerHTML = "";
     });
 }
-// ---------- STUDENTS PAGE (students.html) ----------
+
+// 6. Registered Students Table
 function loadRegistrations() {
-    sendRequest("GET", "/api/registrations", null, function (status, rows) {
-        if (status != 200 || rows.length == 0) {
-            getBox("registrationTable").innerHTML = "<p>No registrations yet.</p>";
+    ajax("GET", "/api/registrations", null, (status, list) => {
+        if (status != 200 || !list.length) {
+            $("registrationTable").innerHTML = "<p>No registrations yet.</p>";
             return;
         }
-        let output = "<table><tr><th>ID</th><th>Name</th><th>Roll No</th><th>Dept</th>" +
-            "<th>Year</th><th>Seminar</th><th>Date</th></tr>";
-        for (let i = 0; i < rows.length; i++) {
-            const r = rows[i];
-            output += "<tr><td>" + safe(r.id) + "</td><td>" + safe(r.name) + "</td><td>" +
-                safe(r.rollNo) + "</td><td>" + safe(r.department) + "</td><td>" + r.year +
-                "</td><td>" + safe(r.seminarTitle) + "</td><td>" + safe(r.date) + "</td></tr>";
-        }
-        getBox("registrationTable").innerHTML = output + "</table>";
+        let rows = list.map(r => `<tr><td>${r.id}</td><td>${r.name}</td><td>${r.rollNo}</td><td>${r.department}</td><td>${r.year}</td><td>${r.seminarTitle}</td><td>${r.date}</td></tr>`).join("");
+        $("registrationTable").innerHTML = `<table><tr><th>ID</th><th>Name</th><th>Roll No</th><th>Dept</th><th>Year</th><th>Seminar</th><th>Date</th></tr>${rows}</table>`;
     });
 }
-// ---------- START: each page runs only what it needs ----------
-if (pageHas("seminarSelect")) { // Register page
-    loadSeminars();
-}
-if (pageHas("registrationTable")) { // Students page
-    loadRegistrations();
-}
-if (pageHas("addForm")) { // Add Seminar page
-    getInput("date").min = todayIso(); // block past dates in the calendar
-}
-// The Seminars page waits for the "Show Seminars" button.
+
+// Auto-run on page load
+if ($("seminarSelect")) loadSeminars();
+if ($("registrationTable")) loadRegistrations();

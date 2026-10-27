@@ -4,199 +4,71 @@ const app = express();
 app.use(express.json());
 app.use(express.static("public"));
 
-// ---------- Data (no database, only arrays) ----------
-const departments = ["CSE", "ECE", "EEE", "MECH", "CIVIL", "IT"];
+const departments = ["CSE","AI","AIML", "ECE", "EEE", "MECH", "CIVIL", "IT"];
 
-const seminars = [
-    { id: 1, title: "Introduction to Artificial Intelligence", speaker: "Dr. Meera Nair", date: "2026-11-12", time: "10:00", venue: "Main Auditorium", capacity: 120 },
-    { id: 2, title: "Web Development with Node.js", speaker: "Mr. Arjun Rao", date: "2026-11-18", time: "14:00", venue: "Seminar Hall A", capacity: 60 },
-    { id: 3, title: "Cyber Security Essentials", speaker: "Ms. Kavya Reddy", date: "2026-11-25", time: "11:00", venue: "Seminar Hall B", capacity: 3 },
-    { id: 4, title: "Career Planning and Placements", speaker: "Mr. Suresh Kumar", date: "2026-12-02", time: "09:30", venue: "Main Auditorium", capacity: 150 }
+let seminars = [
+    { id: 1, title: "Introduction to AI", speaker: "Dr. Meera Nair", date: "2026-11-12", time: "10:00", venue: "Main Auditorium", capacity: 120 },
+    { id: 2, title: "Web Development with Node", speaker: "Mr. Arjun Rao", date: "2026-11-18", time: "14:00", venue: "Seminar Hall A", capacity: 60 },
+    { id: 3, title: "Deep Learning Fundamentals", speaker: "Mr. Rahul Mishra", date: "2026-11-23", time: "12:00", venue: "I Seminar Hall", capacity: 80 }
 ];
 
-const registrations = [];
+let registrations = [];
 
-// ---------- Helper functions ----------
-function countRegistered(seminarId) {
-    let count = 0;
-    for (let i = 0; i < registrations.length; i++) {
-        if (registrations[i].seminarId === seminarId) {
-            count++;
-        }
-    }
-    return count;
-}
-
-function makeId() {
-    return "SEM" + Math.floor(1000 + Math.random() * 9000);
-}
-
-function todayDate() {
-    const d = new Date();
-    return d.getDate() + "/" + (d.getMonth() + 1) + "/" + d.getFullYear();
-}
-
-// today as yyyy-mm-dd (same format as the date box in the form)
-function todayIso() {
-    const d = new Date();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return d.getFullYear() + "-" + month + "-" + day;
-}
-
-// ---------- Routes ----------
-app.get("/about", function (req, res) {
-    res.send("Campus Seminar Registration Portal");
+// 1. Get all seminars with seats left
+app.get("/api/seminars", (req, res) => {
+    let list = seminars.map(s => {
+        let count = registrations.filter(r => r.seminarId === s.id).length;
+        return { ...s, seatsLeft: s.capacity - count };
+    });
+    res.json({ departments, seminars: list });
 });
 
-// Send all seminars with seats left
-app.get("/api/seminars", function (req, res) {
-    const list = [];
-    for (let i = 0; i < seminars.length; i++) {
-        const s = seminars[i];
-        list.push({
-            id: s.id, title: s.title, speaker: s.speaker, date: s.date,
-            time: s.time, venue: s.venue, capacity: s.capacity,
-            seatsLeft: s.capacity - countRegistered(s.id)
-        });
-    }
-    // earliest seminar first (yyyy-mm-dd text sorts correctly)
-    list.sort(function (a, b) {
-        return a.date < b.date ? -1 : 1;
-    });
-    res.json({ departments: departments, seminars: list });
-});
-
-// Add a new seminar
-app.post("/api/seminars", function (req, res) {
-    const data = req.body;
-    const title = String(data.title || "").trim();
-    const speaker = String(data.speaker || "").trim();
-    const date = String(data.date || "").trim();
-    const time = String(data.time || "").trim();
-    const venue = String(data.venue || "").trim();
-    const capacity = Number(data.capacity);
-
-    if (title.length < 5) {
-        return res.status(400).json({ message: "Title must have at least 5 characters." });
-    }
-    if (speaker.length < 3) {
-        return res.status(400).json({ message: "Speaker name must have at least 3 characters." });
-    }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-        return res.status(400).json({ message: "Select a valid date." });
-    }
-    if (date < todayIso()) {
-        return res.status(400).json({ message: "The seminar date cannot be in the past." });
-    }
-    if (!/^\d{2}:\d{2}$/.test(time)) {
-        return res.status(400).json({ message: "Select a valid time." });
-    }
-    if (venue.length < 2) {
-        return res.status(400).json({ message: "Enter the venue." });
-    }
-    if (!Number.isInteger(capacity) || capacity < 1 || capacity > 500) {
-        return res.status(400).json({ message: "Seats must be a whole number from 1 to 500." });
-    }
-    const duplicate = seminars.some(function (s) {
-        return s.title.toLowerCase() === title.toLowerCase() && s.date === date;
-    });
-    if (duplicate) {
-        return res.status(409).json({ message: "This seminar is already added for that date." });
-    }
-
-    const newId = seminars.length === 0 ? 1 : seminars[seminars.length - 1].id + 1;
-    const seminar = { id: newId, title: title, speaker: speaker, date: date,
-                      time: time, venue: venue, capacity: capacity };
+// 2. Add a new seminar
+app.post("/api/seminars", (req, res) => {
+    let { title, speaker, date, time, venue, capacity } = req.body;
+    let seminar = { id: seminars.length + 1, title, speaker, date, time, venue, capacity: Number(capacity) };
     seminars.push(seminar);
-    res.status(201).json({ message: "Seminar added successfully!", seminar: seminar });
+    res.status(201).json({ message: "Seminar added successfully!", seminar });
 });
 
-// Register a student
-app.post("/api/register", function (req, res) {
-    const data = req.body;
-    const name = String(data.name || "").trim();
-    const rollNo = String(data.rollNo || "").trim().toUpperCase();
-    const email = String(data.email || "").trim().toLowerCase();
-    const mobile = String(data.mobile || "").trim();
-    const department = String(data.department || "");
-    const year = Number(data.year);
-    const seminarId = Number(data.seminarId);
+// 3. Register a student
+app.post("/api/register", (req, res) => {
+    let { name, rollNo, email, mobile, department, year, seminarId } = req.body;
+    let s = seminars.find(item => item.id == seminarId);
+    let count = registrations.filter(r => r.seminarId == seminarId).length;
 
-    const seminar = seminars.find(function (s) { return s.id === seminarId; });
-
-    if (name.length < 3) {
-        return res.status(400).json({ message: "Name must have at least 3 characters." });
+    if (!s || count >= s.capacity) {
+        return res.status(409).json({ message: "Sorry, this seminar is full!" });
     }
-    if (rollNo.length < 5) {
-        return res.status(400).json({ message: "Roll number must have at least 5 characters." });
-    }
-    if (!email.includes("@") || !email.includes(".")) {
-        return res.status(400).json({ message: "Enter a valid email." });
-    }
-    if (mobile.length !== 10 || isNaN(Number(mobile))) {
-        return res.status(400).json({ message: "Mobile number must have exactly 10 digits." });
-    }
-    if (!departments.includes(department)) {
-        return res.status(400).json({ message: "Select a valid department." });
-    }
-    if (year < 1 || year > 4 || isNaN(year)) {
-        return res.status(400).json({ message: "Select a valid year." });
-    }
-    if (!seminar) {
-        return res.status(400).json({ message: "Select a valid seminar." });
-    }
-    if (countRegistered(seminarId) >= seminar.capacity) {
-        return res.status(409).json({ message: "Sorry, this seminar is full." });
-    }
-    const duplicate = registrations.some(function (r) {
-        return r.rollNo === rollNo && r.seminarId === seminarId;
-    });
-    if (duplicate) {
-        return res.status(409).json({ message: "This roll number is already registered for this seminar." });
+    if (registrations.some(r => r.rollNo === rollNo && r.seminarId == seminarId)) {
+        return res.status(409).json({ message: "Already registered for this seminar!" });
     }
 
-    const registration = {
-        id: makeId(), name: name, rollNo: rollNo, email: email, mobile: mobile,
-        department: department, year: year, seminarId: seminarId,
-        seminarTitle: seminar.title, date: todayDate()
+    let registration = {
+        id: "SEM" + Math.floor(1000 + Math.random() * 9000),
+        name, rollNo, email, mobile, department, year,
+        seminarId: s.id, seminarTitle: s.title,
+        date: new Date().toLocaleDateString()
     };
     registrations.push(registration);
-    res.status(201).json({ message: "Registration successful!", registration: registration });
+    res.status(201).json({ message: "Registration successful!", registration });
 });
 
-// All registered students (without email and mobile)
-app.get("/api/registrations", function (req, res) {
-    const list = [];
-    for (let i = 0; i < registrations.length; i++) {
-        const r = registrations[i];
-        list.push({ id: r.id, name: r.name, rollNo: r.rollNo, department: r.department,
-                    year: r.year, seminarTitle: r.seminarTitle, date: r.date });
-    }
-    res.json(list);
+// 4. View all registrations
+app.get("/api/registrations", (req, res) => res.json(registrations));
+
+// 5. Find registration by ID
+app.get("/api/registrations/:id", (req, res) => {
+    let reg = registrations.find(r => r.id === req.params.id.toUpperCase());
+    reg ? res.json(reg) : res.status(404).json({ message: "Registration not found" });
 });
 
-// Find one registration using its ID
-app.get("/api/registrations/:id", function (req, res) {
-    const id = req.params.id.toUpperCase();
-    const reg = registrations.find(function (r) { return r.id === id; });
-    if (!reg) {
-        return res.status(404).json({ message: "No registration found with ID " + id });
-    }
-    res.json(reg);
+// 6. Cancel registration
+app.delete("/api/registrations/:id", (req, res) => {
+    let idx = registrations.findIndex(r => r.id === req.params.id.toUpperCase());
+    if (idx === -1) return res.status(404).json({ message: "Registration not found" });
+    registrations.splice(idx, 1);
+    res.json({ message: "Registration cancelled successfully" });
 });
 
-// Cancel a registration
-app.delete("/api/registrations/:id", function (req, res) {
-    const id = req.params.id.toUpperCase();
-    const index = registrations.findIndex(function (r) { return r.id === id; });
-    if (index === -1) {
-        return res.status(404).json({ message: "No registration found with ID " + id });
-    }
-    registrations.splice(index, 1);
-    res.json({ message: "Registration " + id + " cancelled." });
-});
-
-app.listen(3000, function () {
-    console.log("Campus Seminar Server Started at http://localhost:3000");
-});
+app.listen(3000, () => console.log("Server running on http://localhost:3000"));
